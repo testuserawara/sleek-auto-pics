@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageIntro } from "@/components/site/Layout";
 import { site } from "@/lib/site";
+import { submitBooking } from "@/lib/booking";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -20,6 +21,8 @@ const label = "mb-2 block text-xs uppercase tracking-[0.2em] text-muted-foregrou
 
 function Contact() {
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   return (
     <>
       <PageIntro eyebrow="Booking & contact" title="Book a shoot.">
@@ -34,24 +37,39 @@ function Contact() {
         ) : (
           <form
             className="grid gap-6 sm:grid-cols-2"
-            onSubmit={(e) => { e.preventDefault(); setSent(true); }}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setErr(null);
+              setBusy(true);
+              const fd = new FormData(e.currentTarget);
+              const data = Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)]));
+              try {
+                await submitBooking(data);
+                setSent(true);
+              } catch (x) {
+                setErr(x instanceof Error ? x.message : "Something went wrong.");
+              } finally {
+                setBusy(false);
+              }
+            }}
           >
-            <div><label className={label} htmlFor="name">Name</label><input id="name" required className={field} /></div>
-            <div><label className={label} htmlFor="email">Email</label><input id="email" type="email" required className={field} /></div>
-            <div><label className={label} htmlFor="phone">Phone</label><input id="phone" type="tel" className={field} /></div>
-            <div><label className={label} htmlFor="car">Car (make, model, year)</label><input id="car" required className={field} /></div>
+            <div><label className={label} htmlFor="name">Name</label><input id="name" name="name" required maxLength={100} className={field} /></div>
+            <div><label className={label} htmlFor="email">Email</label><input id="email" name="email" type="email" required maxLength={255} className={field} /></div>
+            <div><label className={label} htmlFor="phone">Phone</label><input id="phone" name="phone" type="tel" maxLength={40} className={field} /></div>
+            <div><label className={label} htmlFor="car">Car (make, model, year)</label><input id="car" name="car" required maxLength={150} className={field} /></div>
             <div>
               <label className={label} htmlFor="type">Shoot type</label>
-              <select id="type" className={`${field} bg-background`}>
+              <select id="type" name="shoot_type" className={`${field} bg-background`}>
                 <option>Listing photography</option>
                 <option>Dealership photography</option>
                 <option>Custom shoot</option>
               </select>
             </div>
-            <div><label className={label} htmlFor="when">Preferred timing</label><input id="when" placeholder="e.g. weekday evening, next week" className={field} /></div>
-            <div className="sm:col-span-2"><label className={label} htmlFor="loc">Location</label><input id="loc" className={field} /></div>
-            <div className="sm:col-span-2"><label className={label} htmlFor="msg">Anything else?</label><textarea id="msg" rows={5} className={field} /></div>
-            <button className="bg-primary px-6 py-4 font-semibold text-primary-foreground sm:col-span-2 sm:justify-self-start">Send booking request</button>
+            <div><label className={label} htmlFor="when">Preferred timing</label><input id="when" name="preferred_timing" maxLength={200} placeholder="e.g. weekday evening, next week" className={field} /></div>
+            <div className="sm:col-span-2"><label className={label} htmlFor="loc">Location</label><input id="loc" name="location" maxLength={200} className={field} /></div>
+            <div className="sm:col-span-2"><label className={label} htmlFor="msg">Anything else?</label><textarea id="msg" name="message" rows={5} maxLength={2000} className={field} /></div>
+            {err && <p role="alert" className="text-destructive sm:col-span-2">{err}</p>}
+            <button disabled={busy} className="bg-primary px-6 py-4 font-semibold text-primary-foreground disabled:opacity-60 sm:col-span-2 sm:justify-self-start">{busy ? "Sending…" : "Send booking request"}</button>
           </form>
         )}
         <aside className="space-y-6 text-sm">
