@@ -8,7 +8,7 @@ import w5 from "@/assets/work-5.jpg";
 import hero from "@/assets/hero.jpg";
 import { site, testimonials } from "@/lib/site";
 
-export const works = [
+export const works: { src: string; title: string; tag: string; w: number; h: number }[] = [
   { src: hero, title: "Performance sedan", tag: "Exterior · Dusk", w: 1920, h: 1088 },
   { src: w2, title: "Cabin detail", tag: "Interior", w: 1008, h: 1264 },
   { src: w3, title: "Wheel & light", tag: "Detail", w: 1008, h: 1264 },
@@ -37,7 +37,7 @@ function Shot({ item, className = "" }: { item: (typeof works)[number]; classNam
 }
 
 export function WorkGrid({ full = false }: { full?: boolean }) {
-  const [a, b, c, d, e, f] = works;
+  const [a, b, c, d, e, f] = works as [typeof works[0], typeof works[0], typeof works[0], typeof works[0], typeof works[0], typeof works[0]];
   return (
     <div className="grid gap-3 md:gap-4">
       <Shot item={d} className="aspect-[16/9]" />
